@@ -1,0 +1,30 @@
+{
+  "name": "@triangularcube/pulumi-fauna-provider",
+  "version": "0.0.1",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "Michael Liu",
+  "license": "MIT",
+  "peerDependencies": {
+    "@pulumi/pulumi": "^2.22.0"
+  },
+  "devDependencies": {
+    "@types/uuid": "^8.3.0",
+    "@typescript-eslint/eslint-plugin": "^4.17.0",
+    "@typescript-eslint/parser": "^4.17.0",
+    "eslint": "^7.22.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.3.1",
+    "prettier": "^2.2.1",
+    "typescript": "^4.2.3"
+  },
+  "dependencies": {
+    "faunadb": "^4.1.1",
+    "uuid": "^8.3.2"
+  }
+}
