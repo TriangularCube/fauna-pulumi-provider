@@ -1,13 +1,26 @@
 import { Client } from 'faunadb'
 
-export { query as q } from 'faunadb'
-
 export const createClient = async (): Promise<Client> => {
-  const pulumi = await import('@pulumi/pulumi')
-  const config = new pulumi.Config()
-
-  const key = process.env.FAUNA_KEY ?? config.require('faunaKey')
+  const key = process.env.FAUNA_KEY
   const faunadb = await import('faunadb')
 
-  return new faunadb.Client({ secret: key })
+  return new faunadb.Client({ secret: key ?? '' })
+}
+export { query as q } from 'faunadb'
+
+export interface CollectionResponse {
+  name: string
+  ts: number
+  history_days?: number | null
+  ttl_days?: number | null
+}
+
+export interface IndexResponse {
+  name: string
+  ts: number
+  serialized: boolean
+  partitions: number
+
+  // TODO: Figure out what comes back from Source
+  // source: Expr
 }
