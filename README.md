@@ -5,7 +5,6 @@ library is to provide a simple way to provision and maintain resources
 in FaunaDB, using Typescript/Javascript, with Pulumi.
 
 ## How to use
----
 First, you need to install the Pulumi CLI in your system. This CLI will be needed to create any resources. Please refer to this [link](https://www.pulumi.com/docs/reference/cli/).
 
 You can install this library using npm:
@@ -22,7 +21,6 @@ _Note: As currently this project only supports the creation of Collections and I
 This library will look for the key in the environment variable `FAUNA_KEY`. Once Pulumi starts supporting stack configurations in dynamic providers, this library will fallback to a key in the stack configuration.
 
 ## API
----
 Collections:
 ```ts
 import { Collection, query as q } from 'faunadb-pulumi-provider'
@@ -110,7 +108,6 @@ import { query as q } from 'faunadb-pulumi-provider'
 ```
 
 ## TODOs
----
 - Functions
 - Roles
 - Documents
