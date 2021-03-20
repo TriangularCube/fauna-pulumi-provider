@@ -80,7 +80,7 @@ const index = new Index('myIndex', {
 export const indexTs = index.ts
 export const indexPartitions = index.partitions
 ```
-`source` is the only field to significantly deviate from faunadb. Since wrapping names into `Ref`s are trivial, this library has opted to use names instead. So source will take
+`source` is the only field to significantly deviate from faunadb. Since wrapping names into `Ref`s are trivial, this library has opted to use names instead. So `source` will take
 ```ts
 {
   source: 'name-string'
