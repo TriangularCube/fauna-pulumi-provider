@@ -1,7 +1,7 @@
 {
   "name": "fauna-pulumi-provider",
   "version": "0.1.2",
-  "description": "",
+  "description": "Experimental Pulumi dynamic provider for FaunaDB",
   "files": [
     "dist/**/*"
   ],
@@ -17,15 +17,14 @@
   ],
   "author": "Michael Liu",
   "license": "MIT",
-  "peerDependencies": {
-    "@pulumi/pulumi": "^2.22.0"
-  },
+  "homepage": "https://github.com/TriangularCube/fauna-pulumi-provider",
   "repository": {
     "type": "git",
-    "url": "https://github.com:TriangularCube/fauna-pulumi-provider.git"
+    "url": "git@github.com:TriangularCube/fauna-pulumi-provider.git"
   },
-  "bugs": {
-    "url": "https://github.com/TriangularCube/fauna-pulumi-provider/issues"
+  "bugs": "https://github.com/TriangularCube/fauna-pulumi-provider/issues",
+  "peerDependencies": {
+    "@pulumi/pulumi": "^2.22.0"
   },
   "devDependencies": {
     "@types/uuid": "^8.3.0",
