@@ -113,3 +113,5 @@ import { query as q } from 'faunadb-pulumi-provider'
 - Documents
 - Tokens
 - Better input validation
+- Better typing for FQL expressions instead of the generic EXPR
+- Deep object comparison for non-primative input fields 
