@@ -108,7 +108,6 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
     }
 
     const outs = generateOutput(inputs, response)
-    console.log(outs)
 
     return {
       id: uuid.v4(),
@@ -129,7 +128,6 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
       if (olds[key] == null && news[key] == null) {
         continue
       } else if (JSON.stringify(olds[key]) !== JSON.stringify(news[key])) {
-        console.log('Updating field', key)
         update = true
       } else {
         stables.push(key)
