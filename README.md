@@ -16,9 +16,9 @@ npm install faunadb-pulumi-provider
 After installation, you will need to configure access to
 FaunaDB using an access token.
 
-_Note: As currently this project only supports the creation of Collections and Indexes, you will require a Server Access Key. As more features are implemented you may need to use an Admin Key to configure roles._
+_Note: As currently this project only supports the creation of Collections and Indexes, only a Server Access Key is required. As more features are implemented an Admin Key may be needed to configure roles._
 
-This library will look for the key in the environment variable `FAUNA_KEY`. Once Pulumi starts supporting stack configurations in dynamic providers, this library will fallback to a key in the stack configuration.
+This library will look for the key in the environment variable `FAUNA_ADMIN_KEY`. Once Pulumi starts supporting stack configurations in dynamic providers, this library will fallback to a key in the stack configuration.
 
 ## API
 Collections:

@@ -1,7 +1,7 @@
 import { Client } from 'faunadb'
 
 export const createClient = async (): Promise<Client> => {
-  const key = process.env.FAUNA_KEY
+  const key = process.env.FAUNA_ADMIN_KEY
   const faunadb = await import('faunadb')
 
   return new faunadb.Client({ secret: key ?? '' })
