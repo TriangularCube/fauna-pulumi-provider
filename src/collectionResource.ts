@@ -1,5 +1,6 @@
 import * as pulumi from '@pulumi/pulumi'
 import { CollectionResponse, createClient, q } from './fauna'
+import { tryCreate } from './utils/tryCreate'
 
 interface CollectionProviderArgs {
   name: string
@@ -27,9 +28,8 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
     const { v4 } = await import('uuid')
     const client = await createClient()
 
-    let response: CollectionResponse
-    try {
-      response = await client.query(
+    const tryCreateCollection = async (): Promise<CollectionResponse> => {
+      return await client.query(
         q.CreateCollection({
           name: inputs.name,
           history_days: inputs.history_days,
@@ -37,10 +37,9 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
           data: inputs.data,
         })
       )
-    } catch (error) {
-      console.error(error.responseRaw.description)
-      throw new Error('Fauna Error')
     }
+
+    const response = await tryCreate<CollectionResponse>(tryCreateCollection)
 
     return {
       id: v4(),
@@ -65,7 +64,7 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
 
     for (const key of keys) {
       if (olds[key] == null && news[key] == null) {
-        continue
+        // Do nothing
       } else if (JSON.stringify(olds[key]) === JSON.stringify(news[key])) {
         stables.push(key)
       } else if (
@@ -106,8 +105,11 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
         })
       )
     } catch (error) {
-      console.error(error)
-      throw new Error('Fauna Error')
+      throw new Error(
+        JSON.stringify(
+          error.requestResult.responseContent.errors[0].description
+        )
+      )
     }
 
     return {
@@ -118,7 +120,11 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
   async delete(id: pulumi.ID, props: CollectionProviderArgs) {
     const client = await createClient()
 
-    await client.query(q.Delete(q.Collection(props.name)))
+    try {
+      await client.query(q.Delete(q.Collection(props.name)))
+    } catch (error) {
+      throw new Error(error.requestResult.responseContent.errors[0].description)
+    }
   }
 }
 

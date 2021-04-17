@@ -1,6 +1,6 @@
 {
-  "name": "fauna-pulumi-provider",
-  "version": "0.2.1",
+  "name": "@triangularcube/fauna-pulumi-provider",
+  "version": "0.2.5",
   "description": "Experimental Pulumi dynamic provider for FaunaDB",
   "files": [
     "dist/**/*"
@@ -37,7 +37,7 @@
     "typescript": "^4.2.3"
   },
   "dependencies": {
-    "faunadb": "^4.1.1",
+    "faunadb": "^4.2.0",
     "uuid": "^8.3.2"
   }
 }

@@ -1,6 +1,7 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
 import { createClient, IndexResponse, q } from './fauna'
+import { tryCreate } from './utils/tryCreate'
 
 interface SourceObject {
   collection: string
@@ -80,7 +81,7 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
       source = q.Collection(inputs.source)
     }
 
-    async function tryCreate(): Promise<IndexResponse> {
+    async function tryCreateIndex(): Promise<IndexResponse> {
       return client.query(
         q.CreateIndex({
           name: inputs.name,
@@ -94,20 +95,7 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
       )
     }
 
-    let response: IndexResponse
-    try {
-      try {
-        response = await tryCreate()
-      } catch (error) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * 60))
-        response = await tryCreate()
-      }
-    } catch (error) {
-      console.error(error.responseRaw.description)
-      throw new Error('Fauna Error')
-    }
-
-    const outs = generateOutput(inputs, response)
+    const response = await tryCreate(tryCreateIndex)
 
     return {
       id: uuid.v4(),
@@ -126,7 +114,7 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
     const updateKeys = ['name', 'unique', 'data'] as (keyof IndexProviderArgs)[]
     for (const key of updateKeys) {
       if (olds[key] == null && news[key] == null) {
-        continue
+        // Do nothing
       } else if (JSON.stringify(olds[key]) !== JSON.stringify(news[key])) {
         update = true
       } else {
@@ -152,7 +140,7 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
     ] as (keyof IndexProviderArgs)[]
     for (const key of replaceKeys) {
       if (olds[key] == null && news[key] == null) {
-        continue
+        // Do nothing
       } else if (JSON.stringify(olds[key]) !== JSON.stringify(news[key])) {
         update = true
         replaces.push(key)
@@ -187,8 +175,11 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
         })
       )
     } catch (error) {
-      console.error(error)
-      throw new Error('Fauna error')
+      throw new Error(
+        JSON.stringify(
+          error.requestResult.responseContent.errors[0].description
+        )
+      )
     }
 
     const outs = generateOutput(news, response)
@@ -199,7 +190,12 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
 
   async delete(id: pulumi.ID, props: IndexProviderArgs) {
     const client = await createClient()
-    client.query(q.Delete(q.Index(props.name)))
+
+    try {
+      await client.query(q.Delete(q.Index(props.name)))
+    } catch (error) {
+      throw new Error(error.requestResult.responseContent.errors[0].description)
+    }
   }
 }
 
