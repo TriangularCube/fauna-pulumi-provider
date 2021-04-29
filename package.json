@@ -1,43 +1,10 @@
 {
-  "name": "@triangularcube/fauna-pulumi-provider",
-  "version": "0.2.6",
-  "description": "Experimental Pulumi dynamic provider for FaunaDB",
-  "files": [
-    "dist/**/*"
-  ],
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "prepublishOnly": "npm run build",
-    "build": "tsc"
-  },
-  "keywords": [
-    "faunadb",
-    "pulumi"
-  ],
-  "author": "Michael Liu",
-  "license": "MIT",
-  "homepage": "https://github.com/TriangularCube/fauna-pulumi-provider",
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:TriangularCube/fauna-pulumi-provider.git"
-  },
-  "bugs": "https://github.com/TriangularCube/fauna-pulumi-provider/issues",
-  "peerDependencies": {
-    "@pulumi/pulumi": "^2.22.0"
-  },
-  "devDependencies": {
-    "@types/uuid": "^8.3.0",
-    "@typescript-eslint/eslint-plugin": "^4.17.0",
-    "@typescript-eslint/parser": "^4.17.0",
-    "eslint": "^7.22.0",
-    "eslint-config-prettier": "^8.1.0",
-    "eslint-plugin-prettier": "^3.3.1",
-    "prettier": "^2.2.1",
-    "typescript": "^4.2.3"
-  },
-  "dependencies": {
-    "faunadb": "^4.2.0",
-    "uuid": "^8.3.2"
+  "name": "fauna-pulumi-provider",
+  "private": true,
+  "workspaces": {
+    "packages": [
+      "provider",
+      "sandbox"
+    ]
   }
 }

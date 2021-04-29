@@ -1,0 +1,3 @@
+name: fauna-provider-sandbox
+runtime: nodejs
+description: Testbed for Fauna Dynamic Provider

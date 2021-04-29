@@ -1,0 +1,17 @@
+{
+    "name": "fauna-provider-sandbox",
+    "version": "0.1.0",
+    "scripts": {
+        "start": "node ./scripts/start.js"
+    },
+    "devDependencies": {
+        "@types/node": "^14.14.43",
+        "prettier": "^2.2.1",
+        "typescript": "^4.2.4",
+        "dotenv": "^8.2.0"
+    },
+    "dependencies": {
+        "@pulumi/pulumi": ">=2.0.0",
+        "@triangularcube/fauna-pulumi-provider": "^0.2.6"
+    }
+}
