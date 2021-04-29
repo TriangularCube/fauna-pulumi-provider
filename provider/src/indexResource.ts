@@ -222,7 +222,7 @@ export class Index extends pulumi.dynamic.Resource {
 
   constructor(
     name: string,
-    args?: IndexArgs,
+    args: IndexArgs,
     opts?: pulumi.CustomResourceOptions
   ) {
     super(new IndexResourceProvider(), name, { name, ...args }, opts)
