@@ -37,17 +37,17 @@ function generateOutput(
     partitions: response.partitions as 1 | 8,
   }
 
-  // const coercedInput = input as IndexProviderInternalOutput
   const keys = [
     'terms',
     'values',
     'unique',
     'data',
   ] as (keyof IndexProviderArgs)[]
+  const coercedOuts = outs as any
+
   for (const key of keys) {
     if (input[key] != null) {
       // Sigh, can't make this work with TS
-      const coercedOuts = outs as any
       coercedOuts[key] = input[key]
     }
   }
