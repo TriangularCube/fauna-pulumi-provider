@@ -7,6 +7,8 @@ export async function tryCreate<T>(func: () => Promise<T>): Promise<T> {
   } catch (error) {
     const errorData = error.requestResult.responseContent.errors[0]
 
+    // TODO: Match other errors which warrant retry
+    // TODO: Support multiple errors?
     if (errorData.failures?.[0].code === 'duplicate value') {
       retry = true
     } else {
