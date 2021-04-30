@@ -13,16 +13,13 @@ interface Actions {
   unrestricted_read?: boolean | Expr
   call?: boolean | Expr
 }
-
-interface PrivilegeConfigurationExpr {
+interface PrivilegeConfiguration {
   resource: Expr
   actions: Actions
 }
-
-interface DeserializedRoleArgs {
-  name: string
-  privileges: PrivilegeConfigurationExpr[]
-  // membership?:
+interface MembershipConfiguration {
+  resource: Expr
+  predicate?: Expr
 }
 
 interface SerializedExpr {
@@ -40,20 +37,26 @@ interface SerializedActions {
   call?: boolean | SerializedExpr
 }
 
-interface PrivilegeConfiguration {
+interface SerializedPrivilegeConfiguration {
   resource: SerializedExpr
   actions: SerializedActions
 }
 
-interface MembershipConfiguration {
+interface SerializedMembershipConfiguration {
   resource: SerializedExpr
   predicate?: SerializedExpr
 }
 
-interface RoleProviderArgs {
+interface RoleConfiguration {
   name: string
   privileges: PrivilegeConfiguration[]
   membership?: MembershipConfiguration[]
+}
+
+interface RoleProviderArgs {
+  name: string
+  privileges: SerializedPrivilegeConfiguration[]
+  membership?: SerializedMembershipConfiguration[]
 }
 class RoleResourceProvider implements pulumi.dynamic.ResourceProvider {
   async create(inputs: RoleProviderArgs): Promise<pulumi.dynamic.CreateResult> {
@@ -61,7 +64,7 @@ class RoleResourceProvider implements pulumi.dynamic.ResourceProvider {
     const client = await createClient()
 
     const tryCreateRole = async (): Promise<RoleResponse> => {
-      const privileges: PrivilegeConfigurationExpr[] = inputs.privileges.map(
+      const privileges: PrivilegeConfiguration[] = inputs.privileges.map(
         element => {
           const actions: Actions = {}
 
@@ -78,13 +81,20 @@ class RoleResourceProvider implements pulumi.dynamic.ResourceProvider {
         }
       )
 
-      const roleConfig: DeserializedRoleArgs = {
+      const roleConfig: RoleConfiguration = {
         name: inputs.name,
         privileges,
       }
-      // if (inputs.membership != null) {
-      //   roleConfig.membership = inputs.membership
-      // }
+      if (inputs.membership != null) {
+        const membership: MembershipConfiguration[] = inputs.membership.map(
+          element => ({
+            resource: new Expr(element.resource.raw),
+            predicate: new Expr(element.predicate?.raw),
+          })
+        )
+
+        roleConfig.membership = membership
+      }
 
       return await client.query(q.CreateRole(roleConfig))
     }
@@ -114,7 +124,11 @@ export class Role extends pulumi.dynamic.Resource {
   public readonly privileges?: pulumi.Output<PrivilegeConfiguration[]>
   public readonly membership?: pulumi.Output<MembershipConfiguration[]>
 
-  constructor(name: string, args: RoleArgs) {
-    super(new RoleResourceProvider(), name, { name, ...args }, {})
+  constructor(
+    name: string,
+    args: RoleArgs,
+    opts?: pulumi.CustomResourceOptions
+  ) {
+    super(new RoleResourceProvider(), name, { name, ...args }, opts)
   }
 }
