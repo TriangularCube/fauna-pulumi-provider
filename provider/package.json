@@ -1,5 +1,5 @@
 {
-  "name": "@triangularcube/fauna-pulumi-provider",
+  "name": "fauna-pulumi-provider",
   "version": "0.3.0",
   "description": "Experimental Pulumi dynamic provider for FaunaDB",
   "files": [

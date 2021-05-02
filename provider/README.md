@@ -34,7 +34,7 @@ import the FaunaDB JS driver manually.
 Collections:
 
 ```ts
-import { Collection, query as q } from '@triangularcube/fauna-pulumi-provider'
+import { Collection, query as q } from 'fauna-pulumi-provider'
 
 const collection = new Collection('myCollection', {
   // All fields optional
@@ -56,7 +56,7 @@ export const collectionTtlDays = collection.ttl_days
 Indexes:
 
 ```ts
-import { Collection, Index } from '@triangularcube/fauna-pulumi-provider'
+import { Collection, Index } from 'fauna-pulumi-provider'
 
 const myCollection = new Collection('my-collection')
 
@@ -112,13 +112,13 @@ either a string or a Ref Expr for `soruce`
 
 // Or
 
-import { query as q } from '@triangularcube/fauna-pulumi-provider'
+import { query as q } from 'fauna-pulumi-provider'
 {
   source: q.Collection('collection-name')
 }
 
 // Or
-import { query as q } from '@triangularcube/fauna-pulumi-provider'
+import { query as q } from 'fauna-pulumi-provider'
 {
   source: [
     {
@@ -143,7 +143,7 @@ import { query as q } from '@triangularcube/fauna-pulumi-provider'
 Roles:
 
 ```js
-import { Role, query as q } from '@triangularcube/fauna-pulumi-provider'
+import { Role, query as q } from 'fauna-pulumi-provider'
 
 const role = new Role('my-role', {
   // Required
