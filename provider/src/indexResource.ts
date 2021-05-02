@@ -1,12 +1,20 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
 import { createClient, IndexResponse, q } from './fauna'
+import { SerializedExpr } from './utils/serializedExpr'
 import { tryCreate } from './utils/tryCreate'
 
 interface SourceObject {
-  collection: string
+  collection: string | Expr
   fields?: {
     [index: string]: Expr
+  }
+}
+
+interface SerializedSourceObject {
+  collection: string | SerializedExpr
+  fields?: {
+    [index: string]: SerializedExpr
   }
 }
 
@@ -16,7 +24,7 @@ interface BindingValue {
 
 interface IndexProviderArgs {
   name: string
-  source: string | SourceObject[]
+  source: string | SerializedExpr | SerializedSourceObject[]
   terms?: (BindingValue | { field: string[] })[]
   values?: (BindingValue | { field: string[]; reverse?: boolean })[]
   unique?: boolean
@@ -37,17 +45,17 @@ function generateOutput(
     partitions: response.partitions as 1 | 8,
   }
 
-  // const coercedInput = input as IndexProviderInternalOutput
   const keys = [
     'terms',
     'values',
     'unique',
     'data',
   ] as (keyof IndexProviderArgs)[]
+  const coercedOuts = outs as any
+
   for (const key of keys) {
     if (input[key] != null) {
       // Sigh, can't make this work with TS
-      const coercedOuts = outs as any
       coercedOuts[key] = input[key]
     }
   }
@@ -62,23 +70,33 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
     const uuid = await import('uuid')
     const client = await createClient()
 
-    let source:
-      | Expr
-      | {
-          collection: Expr
-          fields?: {
-            [index: string]: Expr
-          }
-        }[]
+    let source: Expr | SourceObject[]
     if (Array.isArray(inputs.source)) {
-      source = inputs.source.map((element: SourceObject) => {
-        return {
-          collection: q.Collection(element.collection),
-          fields: element.fields,
+      source = inputs.source.map((element: SerializedSourceObject) => {
+        const sourceObject: SourceObject = {
+          collection:
+            typeof element.collection === 'string'
+              ? q.Collection(element.collection)
+              : new Expr(element.collection.raw),
         }
+
+        if (element.fields != null) {
+          const fields: { [index: string]: Expr } = {}
+
+          for (const [key, value] of Object.entries(element.fields)) {
+            fields[key] = new Expr(value.raw)
+          }
+
+          sourceObject.fields = fields
+        }
+
+        return sourceObject
       })
     } else {
-      source = q.Collection(inputs.source)
+      source =
+        typeof inputs.source === 'string'
+          ? q.Collection(inputs.source)
+          : new Expr(inputs.source.raw)
     }
 
     async function tryCreateIndex(): Promise<IndexResponse> {
@@ -142,6 +160,7 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
       if (olds[key] == null && news[key] == null) {
         // Do nothing
       } else if (JSON.stringify(olds[key]) !== JSON.stringify(news[key])) {
+        // TODO: Handle ordering difference (not an update)
         update = true
         replaces.push(key)
       } else {
@@ -201,7 +220,7 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
 
 export interface IndexArgs {
   name?: pulumi.Input<string>
-  source: pulumi.Input<string | SourceObject[]>
+  source: pulumi.Input<string | Expr | SourceObject[]>
   terms?: pulumi.Input<(BindingValue | { field: string[] })[]>
   values?: pulumi.Input<
     (BindingValue | { field: string[]; reverse?: boolean })[]

@@ -24,3 +24,10 @@ export interface IndexResponse {
   // TODO: Figure out what comes back from Source
   // source: Expr
 }
+
+export interface RoleResponse {
+  name: string
+  ts: number
+  privileges: Record<string, unknown>[]
+  membership?: Record<string, unknown>[]
+}
