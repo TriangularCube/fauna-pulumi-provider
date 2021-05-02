@@ -1,6 +1,6 @@
 {
   "name": "@triangularcube/fauna-pulumi-provider",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "description": "Experimental Pulumi dynamic provider for FaunaDB",
   "files": [
     "dist/**/*"
@@ -9,7 +9,8 @@
   "types": "dist/index.d.ts",
   "scripts": {
     "prepublishOnly": "npm run build",
-    "build": "tsc"
+    "build": "tsc",
+    "dev": "tsc --watch --preserveWatchOutput"
   },
   "keywords": [
     "faunadb",
@@ -30,6 +31,7 @@
     "@types/uuid": "^8.3.0",
     "@typescript-eslint/eslint-plugin": "^4.17.0",
     "@typescript-eslint/parser": "^4.17.0",
+    "@types/lodash": "^4.14.168",
     "eslint": "^7.22.0",
     "eslint-config-prettier": "^8.1.0",
     "eslint-plugin-prettier": "^3.3.1",
@@ -38,6 +40,7 @@
   },
   "dependencies": {
     "faunadb": "^4.2.0",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "lodash": "^4.17.21"
   }
 }

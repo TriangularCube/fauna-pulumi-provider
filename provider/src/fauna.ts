@@ -28,4 +28,6 @@ export interface IndexResponse {
 export interface RoleResponse {
   name: string
   ts: number
+  privileges: Record<string, unknown>[]
+  membership?: Record<string, unknown>[]
 }

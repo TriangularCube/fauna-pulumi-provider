@@ -1,6 +1,12 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
+import util from 'util'
+
 import { createClient, q, RoleResponse } from './fauna'
+import {
+  recursivelyConstructExpr,
+  SerializedExpr,
+} from './utils/serializedExpr'
 import { tryCreate } from './utils/tryCreate'
 
 interface Actions {
@@ -20,10 +26,6 @@ interface PrivilegeConfiguration {
 interface MembershipConfiguration {
   resource: Expr
   predicate?: Expr
-}
-
-interface SerializedExpr {
-  raw: any
 }
 
 interface SerializedActions {
@@ -64,52 +66,173 @@ class RoleResourceProvider implements pulumi.dynamic.ResourceProvider {
     const client = await createClient()
 
     const tryCreateRole = async (): Promise<RoleResponse> => {
-      const privileges: PrivilegeConfiguration[] = inputs.privileges.map(
-        element => {
-          const actions: Actions = {}
+      const params = constructRoleConfig(inputs)
 
-          for (const [key, value] of Object.entries(element.actions)) {
-            if (value != null) {
-              actions[key as keyof Actions] = new Expr(value.raw)
-            }
-          }
-
-          return {
-            resource: new Expr(element.resource.raw),
-            actions: actions,
-          }
-        }
-      )
-
-      const roleConfig: RoleConfiguration = {
-        name: inputs.name,
-        privileges,
-      }
-      if (inputs.membership != null) {
-        const membership: MembershipConfiguration[] = inputs.membership.map(
-          element => ({
-            resource: new Expr(element.resource.raw),
-            predicate: new Expr(element.predicate?.raw),
-          })
-        )
-
-        roleConfig.membership = membership
-      }
-
-      return await client.query(q.CreateRole(roleConfig))
+      return await client.query(q.CreateRole(params))
     }
 
     const result = await tryCreate<RoleResponse>(tryCreateRole)
+    const outs = generateOutput(inputs, result)
 
     return {
       id: uuid.v4(),
-      outs: {
-        name: result.name,
-        ts: result.ts,
-        privileges: inputs.privileges,
-        membership: inputs.membership ?? null,
-      },
+      outs,
     }
+  }
+
+  async diff(
+    id: pulumi.ID,
+    olds: RoleProviderArgs,
+    news: RoleProviderArgs
+  ): Promise<pulumi.dynamic.DiffResult> {
+    let update = false
+
+    update = update || comparePrivileges(olds.privileges, news.privileges)
+    update = update || comparePrivileges(news.privileges, olds.privileges)
+
+    // TODO: Membership
+
+    return {
+      changes: update,
+    }
+  }
+
+  async update(
+    id: pulumi.ID,
+    olds: RoleProviderArgs,
+    news: RoleProviderArgs
+  ): Promise<pulumi.dynamic.UpdateResult> {
+    const client = await createClient()
+
+    const params = constructRoleConfig(news)
+
+    let response: RoleResponse
+    try {
+      response = await client.query(q.Update(q.Role(olds.name), params))
+    } catch (error) {
+      console.error(error.requestResult.responseContent.errors[0])
+      throw new Error(
+        JSON.stringify(
+          error.requestResult.responseContent.errors[0].description
+        )
+      )
+    }
+
+    return {
+      outs: generateOutput(news, response),
+    }
+  }
+
+  async delete(id: pulumi.ID, props: RoleProviderArgs) {
+    const client = await createClient()
+
+    try {
+      await client.query(q.Delete(q.Role(props.name)))
+    } catch (error) {
+      console.error(error.requestResult.responseContent.errors)
+      throw new Error(error.requestResult.responseContent.errors[0].description)
+    }
+  }
+}
+
+function constructRoleConfig(input: RoleProviderArgs): RoleConfiguration {
+  const privileges = input.privileges.map(element => {
+    const actions: Actions = {}
+    for (const [stringKey, value] of Object.entries(element.actions)) {
+      const key = stringKey as keyof Actions
+      if (typeof value == 'boolean') {
+        actions[key] = value
+      } else {
+        actions[key] = recursivelyConstructExpr(value)
+      }
+    }
+
+    return {
+      resource: new Expr(element.resource.raw),
+      actions,
+    }
+  })
+
+  const params: RoleConfiguration = {
+    name: input.name,
+    privileges: privileges,
+  }
+
+  if (input.membership != null) {
+    params.membership = input.membership.map(element => {
+      const membership: MembershipConfiguration = {
+        resource: recursivelyConstructExpr(element.resource),
+      }
+
+      if (element.predicate != null) {
+        membership.predicate = recursivelyConstructExpr(element.predicate)
+      }
+
+      return membership
+    })
+  }
+
+  return params
+}
+
+const keys = [
+  'create',
+  'delete',
+  'read',
+  'write',
+  'history_read',
+  'history_write',
+  'unrestricted_read',
+  'call',
+]
+
+function comparePrivileges(
+  from: SerializedPrivilegeConfiguration[],
+  to: SerializedPrivilegeConfiguration[]
+): boolean {
+  if (from == null && to == null) {
+    return false
+  }
+
+  if ((from == null && to != null) || (from != null && to == null)) {
+    return true
+  }
+
+  for (const privilege of from) {
+    const foundPrivileges = to!.filter(
+      value =>
+        JSON.stringify(value.resource.raw) ===
+        JSON.stringify(privilege.resource.raw)
+    )
+
+    const actions = privilege.actions
+    for (const stringKey of keys) {
+      const key = stringKey as keyof SerializedActions
+      if (actions[key] == null) {
+        continue
+      }
+
+      if (
+        !foundPrivileges.some(
+          foundPrivilege =>
+            JSON.stringify(foundPrivilege.actions[key]) ===
+            JSON.stringify(actions[key])
+        )
+      ) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
+function generateOutput(input: RoleProviderArgs, response: RoleResponse) {
+  return {
+    name: response.name,
+    ts: response.ts,
+    privileges: input.privileges,
+    membership: input.membership ?? null,
   }
 }
 

@@ -29,6 +29,7 @@ export async function tryCreate<T>(func: () => Promise<T>): Promise<T> {
 
       response = await func()
     } catch (error) {
+      console.error(error.requestResult.responseContent.errors[0])
       throw new Error(error.requestResult.responseContent.errors[0].description)
     }
   }

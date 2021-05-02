@@ -14,7 +14,21 @@ const memberRole = new Role(
       {
         resource: q.Collection('users'),
         actions: {
-          create: true,
+          create: q.Query(data =>
+            q.Select(['data', 'email'], q.Get(q.CurrentIdentity()))
+          ),
+          write: q.Query((oldData, newData) =>
+            q.And(
+              q.Equals(
+                q.CurrentIdentity(),
+                q.Select(['data', 'owner'], oldData)
+              ),
+              q.Equals(
+                q.Select(['data', 'owner'], oldData),
+                q.Select(['data', 'owner'], newData)
+              )
+            )
+          ),
         },
       },
     ],
@@ -23,3 +37,5 @@ const memberRole = new Role(
     dependsOn: [users],
   }
 )
+
+export const priv = memberRole.privileges
