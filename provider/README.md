@@ -34,7 +34,7 @@ import the FaunaDB JS driver manually.
 Collections:
 
 ```ts
-import { Collection, query as q } from 'fauna-pulumi-provider'
+import { Collection } from 'fauna-pulumi-provider'
 
 const collection = new Collection('myCollection', {
   // All fields optional
@@ -103,7 +103,7 @@ export const indexPartitions = index.partitions
 ```
 
 Since wrapping names into `Ref`s are trivial, this library can accept
-either a string or a Ref Expr for `soruce`
+either a string or a Ref Expr for `source`
 
 ```ts
 {
@@ -171,7 +171,7 @@ const role = new Role('my-role', {
         ),
 
         // Same pattern apply to the rest of the options
-        // Please refer to FaunaDB documentation for exact function parameters
+        // Please refer to FaunaDB docs for exact function parameters
         delete: ...,
         read: ...,
         write: ...,
