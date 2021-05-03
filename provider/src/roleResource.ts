@@ -89,7 +89,8 @@ class RoleResourceProvider implements pulumi.dynamic.ResourceProvider {
     update = update || comparePrivileges(olds.privileges, news.privileges)
     update = update || comparePrivileges(news.privileges, olds.privileges)
 
-    // TODO: Membership
+    update = update || compareMembership(olds.membership, news.membership)
+    update = update || compareMembership(news.membership, olds.membership)
 
     return {
       changes: update,
@@ -193,15 +194,18 @@ function comparePrivileges(
     return false
   }
 
-  if ((from == null && to != null) || (from != null && to == null)) {
+  if (from == null || to == null) {
+    return true
+  }
+
+  if (from.length != to.length) {
     return true
   }
 
   for (const privilege of from) {
-    const foundPrivileges = to!.filter(
-      value =>
-        JSON.stringify(value.resource.raw) ===
-        JSON.stringify(privilege.resource.raw)
+    const privString = JSON.stringify(privilege.resource.raw)
+    const foundPrivileges = to.filter(
+      value => JSON.stringify(value.resource.raw) === privString
     )
 
     const actions = privilege.actions
@@ -216,6 +220,49 @@ function comparePrivileges(
           foundPrivilege =>
             JSON.stringify(foundPrivilege.actions[key]) ===
             JSON.stringify(actions[key])
+        )
+      ) {
+        return true
+      }
+    }
+  }
+
+  return false
+}
+
+function compareMembership(
+  from?: SerializedMembershipConfiguration[],
+  to?: SerializedMembershipConfiguration[]
+): boolean {
+  if (from == null && to == null) {
+    return false
+  }
+
+  if (from == null || to == null) {
+    return true
+  }
+
+  if (from.length != to.length) {
+    return true
+  }
+
+  for (const membership of from) {
+    const foundMemberships = to.filter(
+      value =>
+        JSON.stringify(value.resource.raw) ===
+        JSON.stringify(membership.resource.raw)
+    )
+
+    if (membership.predicate == null) {
+      if (foundMemberships.length < 1) {
+        return true
+      }
+    } else {
+      const predicate = JSON.stringify(membership.predicate.raw)
+
+      if (
+        !foundMemberships.some(
+          element => JSON.stringify(element.predicate?.raw) === predicate
         )
       ) {
         return true
