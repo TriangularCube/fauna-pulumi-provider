@@ -1,6 +1,5 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
-import util from 'util'
 
 import { createClient, q, RoleResponse } from './fauna'
 import {

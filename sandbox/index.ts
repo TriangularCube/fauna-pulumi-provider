@@ -3,9 +3,13 @@ import {
   Collection,
   Index,
   Role,
-} from '@triangularcube/fauna-pulumi-provider'
+} from 'fauna-pulumi-provider'
 
 const users = new Collection('users')
+
+const userByEmail = new Index('user-by-email', {
+  source: q.Collection('users')
+})
 
 const memberRole = new Role(
   'p-role',

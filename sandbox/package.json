@@ -14,6 +14,6 @@
     },
     "dependencies": {
         "@pulumi/pulumi": ">=2.0.0",
-        "@triangularcube/fauna-pulumi-provider": "^0.2.6"
+        "fauna-pulumi-provider": "^0.3.0"
     }
 }
