@@ -16,7 +16,7 @@ interface FunctionConfiguration {
   role?: BuiltInRole | Expr
 }
 
-interface SerializedFunctionArgs {
+interface FunctionProviderArgs {
   name: string
   body: SerializedExpr
   data?: Record<string, unknown>
@@ -25,7 +25,7 @@ interface SerializedFunctionArgs {
 
 class FunctionResourceProvider implements pulumi.dynamic.ResourceProvider {
   async create(
-    inputs: SerializedFunctionArgs
+    inputs: FunctionProviderArgs
   ): Promise<pulumi.dynamic.CreateResult> {
     const client = await createClient()
 
@@ -58,6 +58,17 @@ class FunctionResourceProvider implements pulumi.dynamic.ResourceProvider {
         name: result.name,
         ts: result.ts,
       },
+    }
+  }
+
+  async delete(id: pulumi.ID, props: FunctionProviderArgs) {
+    const client = await createClient()
+
+    try {
+      await client.query(q.Delete(q.Function(props.name)))
+    } catch (error) {
+      console.error(error.requestResult.responseContent.errors)
+      throw new Error(error.requestResult.responseContent.errors[0].description)
     }
   }
 }
