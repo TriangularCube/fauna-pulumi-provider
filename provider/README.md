@@ -140,6 +140,15 @@ import { query as q } from 'fauna-pulumi-provider'
 }
 ```
 
+_WARNING: Replacing indexes necessarily deletes the old index
+first. Do not engage in a replacement operation if you require
+an active replacement index to exist first._
+
+_A possible workaround is to create a new index first, and once
+it is active, delete the old index, and rename the new index.
+This will require several operations, thus is unsuitable for CI
+workflows._
+
 Roles:
 
 ```js
@@ -204,8 +213,9 @@ const role = new Role('my-role', {
 ```
 
 ## Note
+
 Due to the way FaunaDB driver operates, it is impossible for this library to validate
-the inputs, therefore FaunaDB errors will be thrown if any errors occur due to 
+the inputs, therefore FaunaDB errors will be thrown if any errors occur due to
 invalid configuration.
 
 ## TODOs
