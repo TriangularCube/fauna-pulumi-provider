@@ -3,8 +3,7 @@
     "version": "0.1.0",
     "scripts": {
         "start": "node ./scripts/start.js",
-        "destroy": "node ./scripts/destroy.js",
-        "test": "node ./scripts/test.js"
+        "destroy": "node ./scripts/destroy.js"
     },
     "devDependencies": {
         "@types/node": "^14.14.43",
