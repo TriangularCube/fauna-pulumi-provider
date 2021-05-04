@@ -151,7 +151,7 @@ workflows._
 
 Roles:
 
-```js
+```ts
 import { Role, query as q } from 'fauna-pulumi-provider'
 
 const role = new Role('my-role', {
@@ -212,6 +212,28 @@ const role = new Role('my-role', {
 })
 ```
 
+Functions:
+
+```ts
+import { Function, query as q } from 'fauna-pulumi-provider'
+
+const function = new Function('some-function', {
+  // The body is a generic Fauna EXPR
+  body: q.Query(q.Lambda(ref => q.Select(['data', 'vip'], q.Get(ref)))),
+
+  // Optional
+  name: 'some-function', // Inferred from Logical Name if not present
+  data: {
+    // this is an arbitrary object
+  },
+
+  // The role can either be a built in role
+  role: 'admin',
+  // Or a ref to a user defined role
+  role: q.Role('some-role')
+})
+```
+
 ## Note
 
 Due to the way FaunaDB driver operates, it is impossible for this library to validate
@@ -220,6 +242,5 @@ invalid configuration.
 
 ## TODOs
 
-- Functions
 - Documents
 - Tokens
