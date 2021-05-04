@@ -25,7 +25,7 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
   async create(
     inputs: CollectionProviderArgs
   ): Promise<pulumi.dynamic.CreateResult> {
-    const { v4 } = await import('uuid')
+    const uuid = await import('uuid')
     const client = await createClient()
 
     const tryCreateCollection = async (): Promise<CollectionResponse> => {
@@ -42,7 +42,7 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
     const response = await tryCreate<CollectionResponse>(tryCreateCollection)
 
     return {
-      id: v4(),
+      id: uuid.v4(),
       outs: generateOutput(response),
     }
   }

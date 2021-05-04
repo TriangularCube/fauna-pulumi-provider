@@ -27,6 +27,7 @@ class FunctionResourceProvider implements pulumi.dynamic.ResourceProvider {
   async create(
     inputs: FunctionProviderArgs
   ): Promise<pulumi.dynamic.CreateResult> {
+    const uuid = await import('uuid')
     const client = await createClient()
 
     const tryCreateFunction = async (): Promise<FunctionResponse> => {
@@ -53,7 +54,7 @@ class FunctionResourceProvider implements pulumi.dynamic.ResourceProvider {
     const result = await tryCreate<FunctionResponse>(tryCreateFunction)
 
     return {
-      id: result.name,
+      id: uuid.v4(),
       outs: {
         name: result.name,
         ts: result.ts,
