@@ -195,9 +195,7 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
       )
     } catch (error) {
       throw new Error(
-        JSON.stringify(
-          error.requestResult.responseContent.errors[0].description
-        )
+        JSON.stringify(error.requestResult.responseContent.errors[0])
       )
     }
 

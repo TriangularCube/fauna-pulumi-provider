@@ -1,4 +1,5 @@
-import { Client } from 'faunadb'
+import { Client, values } from 'faunadb'
+import Ref = values.Ref
 
 export const createClient = async (): Promise<Client> => {
   const key = process.env.FAUNA_ADMIN_KEY
@@ -32,5 +33,16 @@ export interface RoleResponse {
 
 export interface FunctionResponse {
   name: string
+  ts: number
+}
+
+export interface TokenResponse {
+  ref: Ref
+  ts: number
+  secret: string
+}
+
+export interface DocumentResponse {
+  ref: Ref
   ts: number
 }

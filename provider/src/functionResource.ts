@@ -57,7 +57,62 @@ class FunctionResourceProvider implements pulumi.dynamic.ResourceProvider {
       id: uuid.v4(),
       outs: {
         name: result.name,
+        body: inputs.body,
+        role: inputs.role,
         ts: result.ts,
+      },
+    }
+  }
+
+  async diff(
+    id: pulumi.ID,
+    olds: FunctionProviderArgs,
+    news: FunctionProviderArgs
+  ): Promise<pulumi.dynamic.DiffResult> {
+    let changes = JSON.stringify(olds.body) !== JSON.stringify(news.body)
+
+    changes = changes || olds.name !== news.name
+
+    changes = changes || JSON.stringify(olds.role) !== JSON.stringify(news.role)
+
+    changes = changes || JSON.stringify(olds.data) !== JSON.stringify(news.data)
+
+    return {
+      changes,
+    }
+  }
+
+  async update(
+    id: pulumi.ID,
+    olds: FunctionProviderArgs,
+    news: FunctionProviderArgs
+  ): Promise<pulumi.dynamic.UpdateResult> {
+    const client = await createClient()
+
+    let response: FunctionResponse
+    try {
+      response = await client.query(
+        q.Update(q.Function(olds.name), {
+          name: news.name,
+          body: news.body,
+          data: news.data,
+        })
+      )
+    } catch (error) {
+      console.error(error.requestResult.responseContent.errors[0])
+      throw new Error(
+        JSON.stringify(
+          error.requestResult.responseContent.errors[0].description
+        )
+      )
+    }
+
+    return {
+      outs: {
+        name: response.name,
+        ts: response.ts,
+        body: news.body,
+        data: news.data,
       },
     }
   }
