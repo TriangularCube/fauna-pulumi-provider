@@ -252,3 +252,4 @@ i.e. TS of any of the above resources
 ## TODOs
 
 - Documents
+- Take Fauna Key as argument
