@@ -1,13 +1,12 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
 import { createClient, FunctionResponse, q } from './fauna'
+import { BuiltInRole } from './utils/builtInRoles'
 import {
   recursivelyConstructExpr,
   SerializedExpr,
 } from './utils/serializedExpr'
 import { tryCreate } from './utils/tryCreate'
-
-type BuiltInRole = 'admin' | 'server' | 'server-readonly'
 
 interface FunctionConfiguration {
   name: string

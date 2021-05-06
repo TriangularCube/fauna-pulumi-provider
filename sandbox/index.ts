@@ -6,10 +6,11 @@ import {
   Function,
   Document,
   Token,
+  Key,
 } from 'fauna-pulumi-provider'
 
-const users = new Collection('users')
-
+// const users = new Collection('users')
+//
 // const userByEmail = new Index(
 //   'user-by-email',
 //   {
@@ -19,6 +20,9 @@ const users = new Collection('users')
 //     dependsOn: [users],
 //   }
 // )
+//
+// // @ts-ignore
+// export const userIndex = userByEmail
 
 // const memberRole = new Role(
 //   'p-role',
@@ -64,24 +68,35 @@ const users = new Collection('users')
 //     dependsOn: [users],
 //   }
 // )
-//
+
+const key = new Key('some-key', {
+  role: 'server',
+  data: {
+    name: 'test-key',
+  },
+})
+
+export const KeyPrime = key.secret
+
 // const func = new Function('test-function', {
 //   body: q.Query(q.Lambda('number', q.Add(1, q.Var('number')))),
 // })
 
-const doc = new Document(
-  'doc1',
-  {
-    collection: users.name!,
-    data: {
-      something: 'yi',
-    },
-  },
-  {
-    dependsOn: [users],
-  }
-)
+// const doc = new Document(
+//   'doc1',
+//   {
+//     collection: users.name!,
+//     data: {
+//       something: 'yi',
+//     },
+//   },
+//   {
+//     dependsOn: [users],
+//   }
+// )
 
 // const token = new Token('token-1', {
-//   instance: q.Ref(q.Collection('users'), '123')
+//   instance: q.Ref(q.Collection('test'), '297713243610153481')
 // })
+//
+// export const TokenPrime = token.secret

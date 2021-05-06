@@ -240,7 +240,15 @@ Due to the way FaunaDB driver operates, it is impossible for this library to val
 the inputs, therefore FaunaDB errors will be thrown if any errors occur due to
 invalid configuration.
 
+## Known Bugs
+
+For some reason, Pulumi's dynamic resources will not return outputs properly. As such,
+some properties you would expect to be present after a resource creation is not
+returned, leading to undefined values. These properties can still be viewed in the
+Pulumi dashboard.
+
+i.e. TS of any of the above resources
+
 ## TODOs
 
 - Documents
-- Tokens

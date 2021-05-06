@@ -46,3 +46,9 @@ export interface DocumentResponse {
   ref: Ref
   ts: number
 }
+
+export interface KeyResponse {
+  ref: Ref
+  ts: number
+  secret: string
+}

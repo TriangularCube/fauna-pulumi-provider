@@ -1,7 +1,10 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
 import { createClient, q, TokenResponse } from './fauna'
-import { SerializedExpr } from './utils/serializedExpr'
+import {
+  recursivelyConstructExpr,
+  SerializedExpr,
+} from './utils/serializedExpr'
 import { tryCreate } from './utils/tryCreate'
 
 interface TokenProviderArgs {
@@ -15,7 +18,9 @@ class TokenResourceProvider implements pulumi.dynamic.ResourceProvider {
 
     const tryCreateToken = async (): Promise<TokenResponse> => {
       return await client.query(
-        q.Create(q.Tokens(), new Expr(inputs.instance.raw))
+        q.Create(q.Tokens(), {
+          instance: recursivelyConstructExpr(inputs.instance),
+        })
       )
     }
 
@@ -62,8 +67,8 @@ interface TokenArgs {
   instance: pulumi.Input<Expr>
 }
 export class Token extends pulumi.dynamic.Resource {
-  public readonly ts?: pulumi.Output<number>
-  public readonly secret?: pulumi.Output<string>
+  public readonly ts!: pulumi.Output<number>
+  public readonly secret!: pulumi.Output<string>
 
   constructor(
     name: string,
