@@ -3,7 +3,9 @@
     "version": "0.1.0",
     "scripts": {
         "start": "node ./scripts/start.js",
-        "destroy": "node ./scripts/destroy.js"
+        "destroy": "node ./scripts/destroy.js",
+        "user": "node ./scripts/user.js",
+        "admin": "node ./scripts/admin.js"
     },
     "devDependencies": {
         "@types/node": "^14.14.43",
@@ -14,6 +16,6 @@
     },
     "dependencies": {
         "@pulumi/pulumi": ">=2.0.0",
-        "fauna-pulumi-provider": ">=0.4.0"
+        "fauna-pulumi-provider": ">=0.5.0"
     }
 }

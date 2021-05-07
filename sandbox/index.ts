@@ -9,94 +9,98 @@ import {
   Key,
 } from 'fauna-pulumi-provider'
 
-// const users = new Collection('users')
-//
-// const userByEmail = new Index(
-//   'user-by-email',
-//   {
-//     source: q.Collection('users'),
-//   },
-//   {
-//     dependsOn: [users],
-//   }
-// )
-//
-// // @ts-ignore
-// export const userIndex = userByEmail
+const users = new Collection('users')
+const maps = new Collection('maps')
 
-// const memberRole = new Role(
-//   'p-role',
-//   {
-//     privileges: [
-//       {
-//         resource: q.Collection('users'),
-//         actions: {
-//           create: q.Query(data =>
-//             q.Select(['data', 'email'], q.Get(q.CurrentIdentity()))
-//           ),
-//           write: q.Query((oldData, newData) =>
-//             q.And(
-//               q.Equals(
-//                 q.CurrentIdentity(),
-//                 q.Select(['data', 'owner'], oldData)
-//               ),
-//               q.Equals(
-//                 q.Select(['data', 'owner'], oldData),
-//                 q.Select(['data', 'owner'], newData)
-//               )
-//             )
-//           ),
-//         },
-//       },
-//     ],
-//     membership: [
-//       {
-//         resource: q.Collection('users'),
-//         predicate: q.Query(
-//           q.Lambda(ref => q.Select(['data', 'not-vip'], q.Get(ref)))
-//         ),
-//       },
-//       {
-//         resource: q.Collection('users'),
-//         predicate: q.Query(
-//           q.Lambda(ref => q.Select(['data', 'vip'], q.Get(ref)))
-//         ),
-//       },
-//     ],
-//   },
-//   {
-//     dependsOn: [users],
-//   }
-// )
-
-const key = new Key('some-key', {
-  role: 'server',
-  data: {
-    name: 'test-key',
+const testUser = new Document(
+  'test-user',
+  {
+    collection: 'users',
+    params: {
+      data: {
+        test: 'user',
+      },
+      credentials: {
+        password: 'asdf',
+      },
+    },
   },
+  {
+    dependsOn: [users],
+  }
+)
+
+const token = new Token(
+  'test-token',
+  {
+    instance: q.Ref(q.Collection('users'), testUser.id),
+  },
+  {
+    dependsOn: [testUser],
+  }
+)
+
+export const tokenSecret = token.secret
+
+const createMapFunction = new Function('create-map', {
+  body: q.Query((name: string) =>
+    q.Create(q.Collection('maps'), {
+      data: {
+        name: name,
+        creator: q.CurrentIdentity(),
+        created: q.ToDate(q.Now()),
+      },
+    })
+  ),
+  role: 'server',
 })
 
-export const KeyPrime = key.secret
-
-// const func = new Function('test-function', {
-//   body: q.Query(q.Lambda('number', q.Add(1, q.Var('number')))),
-// })
-
-// const doc = new Document(
-//   'doc1',
-//   {
-//     collection: users.name!,
-//     data: {
-//       something: 'yi',
-//     },
-//   },
-//   {
-//     dependsOn: [users],
-//   }
-// )
-
-// const token = new Token('token-1', {
-//   instance: q.Ref(q.Collection('test'), '297713243610153481')
-// })
-//
-// export const TokenPrime = token.secret
+const userRole = new Role(
+  'user-role',
+  {
+    name: 'user',
+    privileges: [
+      // A user can read his own maps
+      // {
+      //   resource: q.Collection('maps'),
+      //   actions: {
+      //     read: q.Query(ref =>
+      //       q.Let(
+      //         {
+      //           doc: q.Get(ref),
+      //         },
+      //         q.Or(
+      //           q.Select(['data', 'public'], q.Var('doc'), false),
+      //           q.Equals(
+      //             q.Select(['data', 'creator'], q.Var('doc')),
+      //             q.CurrentIdentity()
+      //           )
+      //           // false
+      //         )
+      //       )
+      //     ),
+      //     // create: q.Query(newData =>
+      //     //   q.Equals(
+      //     //     q.Select(['data', 'creator'], newData),
+      //     //     q.CurrentIdentity()
+      //     //   )
+      //     // ),
+      //   },
+      // },
+      {
+        resource: q.Function(createMapFunction.name),
+        actions: {
+          call: true,
+        },
+      },
+    ],
+    membership: [
+      {
+        resource: q.Collection('users'),
+      },
+    ],
+  },
+  {
+    dependsOn: [users, maps],
+  }
+)
