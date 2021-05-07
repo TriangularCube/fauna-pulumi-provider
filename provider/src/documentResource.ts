@@ -105,7 +105,7 @@ interface DocumentArgs {
   data: pulumi.Input<Record<string, unknown>>
 }
 export class Document extends pulumi.dynamic.Resource {
-  public readonly ts?: pulumi.Output<number>
+  public readonly ts!: pulumi.Output<number>
 
   constructor(
     name: string,

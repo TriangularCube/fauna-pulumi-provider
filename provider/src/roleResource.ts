@@ -288,10 +288,10 @@ export interface RoleArgs {
   membership?: pulumi.Input<MembershipConfiguration[]>
 }
 export class Role extends pulumi.dynamic.Resource {
-  public readonly name?: pulumi.Output<string>
-  public readonly ts?: pulumi.Output<number>
-  public readonly privileges?: pulumi.Output<PrivilegeConfiguration[]>
-  public readonly membership?: pulumi.Output<MembershipConfiguration[]>
+  public readonly name!: pulumi.Output<string>
+  public readonly ts!: pulumi.Output<number>
+  public readonly privileges!: pulumi.Output<PrivilegeConfiguration[]>
+  public readonly membership!: pulumi.Output<MembershipConfiguration[]>
 
   constructor(
     name: string,

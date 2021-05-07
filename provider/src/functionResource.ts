@@ -20,6 +20,7 @@ interface FunctionProviderArgs {
   body: SerializedExpr
   data?: Record<string, unknown>
   role?: BuiltInRole | SerializedExpr
+  ts?: number
 }
 
 class FunctionResourceProvider implements pulumi.dynamic.ResourceProvider {
@@ -52,14 +53,19 @@ class FunctionResourceProvider implements pulumi.dynamic.ResourceProvider {
 
     const result = await tryCreate<FunctionResponse>(tryCreateFunction)
 
+    const outs: FunctionProviderArgs = {
+      name: result.name,
+      body: inputs.body,
+      ts: result.ts,
+    }
+
+    if (inputs.role != null) {
+      outs.role = inputs.role
+    }
+
     return {
       id: uuid.v4(),
-      outs: {
-        name: result.name,
-        body: inputs.body,
-        role: inputs.role,
-        ts: result.ts,
-      },
+      outs: outs,
     }
   }
 
@@ -135,8 +141,8 @@ export interface FunctionArgs {
   role?: pulumi.Input<BuiltInRole | Expr>
 }
 export class Function extends pulumi.dynamic.Resource {
-  public readonly name?: pulumi.Output<string>
-  public readonly ts?: pulumi.Output<number>
+  public readonly name!: pulumi.Output<string>
+  public readonly ts!: pulumi.Output<number>
 
   constructor(
     name: string,

@@ -229,10 +229,10 @@ export interface IndexArgs {
 }
 
 export class Index extends pulumi.dynamic.Resource {
-  public readonly name?: pulumi.Output<string>
-  public readonly ts?: pulumi.Output<number>
-  public readonly serialized?: pulumi.Output<boolean>
-  public readonly partitions?: pulumi.Output<number>
+  public readonly name!: pulumi.Output<string>
+  public readonly ts!: pulumi.Output<number>
+  public readonly serialized!: pulumi.Output<boolean>
+  public readonly partitions!: pulumi.Output<number>
 
   // TODO: Figure out what the output of Source is
   // public readonly sourceCollectionName?: pulumi.Output<string>

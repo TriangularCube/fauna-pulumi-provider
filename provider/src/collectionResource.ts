@@ -135,10 +135,10 @@ export interface CollectionArgs {
   data?: pulumi.Input<Record<string, unknown>>
 }
 export class Collection extends pulumi.dynamic.Resource {
-  public readonly name?: pulumi.Output<string>
-  public readonly ts?: pulumi.Output<number>
-  public readonly history_days?: pulumi.Output<number | null>
-  public readonly ttl_days?: pulumi.Output<number | null>
+  public readonly name!: pulumi.Output<string>
+  public readonly ts!: pulumi.Output<number>
+  public readonly history_days!: pulumi.Output<number | null>
+  public readonly ttl_days!: pulumi.Output<number | null>
 
   constructor(
     name: string,

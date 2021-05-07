@@ -247,7 +247,7 @@ some properties you would expect to be present after a resource creation is not
 returned, leading to undefined values. These properties can still be viewed in the
 Pulumi dashboard.
 
-i.e. TS of any of the above resources
+i.e. TS of all above resources
 
 ## TODOs
 
