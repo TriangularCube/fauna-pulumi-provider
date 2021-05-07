@@ -253,3 +253,4 @@ i.e. TS of all above resources
 
 - Documents
 - Take Fauna Key as argument
+- Testing suite

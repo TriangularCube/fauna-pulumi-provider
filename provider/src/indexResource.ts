@@ -1,8 +1,8 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
-import { createClient, IndexResponse, q } from './fauna'
+import { IndexResponse, q } from './fauna'
 import { SerializedExpr } from './utils/serializedExpr'
-import { tryCreate } from './utils/tryCreate'
+import { tryQuery } from './utils/tryQuery'
 
 interface SourceObject {
   collection: string | Expr
@@ -32,7 +32,7 @@ interface IndexProviderArgs {
   data?: Record<string, unknown>
 }
 
-function generateOutput(
+function generateOuts(
   input: IndexProviderArgs,
   response: IndexResponse
 ): IndexProviderArgs {
@@ -68,7 +68,6 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
     inputs: IndexProviderArgs
   ): Promise<pulumi.dynamic.CreateResult> {
     const uuid = await import('uuid')
-    const client = await createClient()
 
     let source: Expr | SourceObject[]
     if (Array.isArray(inputs.source)) {
@@ -99,25 +98,21 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
           : new Expr(inputs.source.raw)
     }
 
-    async function tryCreateIndex(): Promise<IndexResponse> {
-      return client.query(
-        q.CreateIndex({
-          name: inputs.name,
-          source: source,
-          terms: inputs.terms,
-          values: inputs.values,
-          unique: inputs.unique,
-          serialized: inputs.serialized,
-          data: inputs.data,
-        })
-      )
-    }
-
-    const response = await tryCreate(tryCreateIndex)
+    const response = await tryQuery<IndexResponse>(
+      q.CreateIndex({
+        name: inputs.name,
+        source: source,
+        terms: inputs.terms,
+        values: inputs.values,
+        unique: inputs.unique,
+        serialized: inputs.serialized,
+        data: inputs.data,
+      })
+    )
 
     return {
       id: uuid.v4(),
-      outs: generateOutput(inputs, response),
+      outs: generateOuts(inputs, response),
     }
   }
 
@@ -181,38 +176,22 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
     olds: IndexProviderArgs,
     news: IndexProviderArgs
   ): Promise<pulumi.dynamic.UpdateResult> {
-    const client = await createClient()
+    const response = await tryQuery<IndexResponse>(
+      q.Update(q.Index(olds.name), {
+        name: news.name,
+        unique: news.unique,
+        serialized: news.serialized,
+        data: news.data,
+      })
+    )
 
-    let response: IndexResponse
-    try {
-      response = await client.query(
-        q.Update(q.Index(olds.name), {
-          name: news.name,
-          unique: news.unique,
-          serialized: news.serialized,
-          data: news.data,
-        })
-      )
-    } catch (error) {
-      throw new Error(
-        JSON.stringify(error.requestResult.responseContent.errors[0])
-      )
-    }
-
-    const outs = generateOutput(news, response)
     return {
-      outs: outs,
+      outs: generateOuts(news, response),
     }
   }
 
   async delete(id: pulumi.ID, props: IndexProviderArgs) {
-    const client = await createClient()
-
-    try {
-      await client.query(q.Delete(q.Index(props.name)))
-    } catch (error) {
-      throw new Error(error.requestResult.responseContent.errors[0].description)
-    }
+    await tryQuery(q.Delete(q.Index(props.name)))
   }
 }
 

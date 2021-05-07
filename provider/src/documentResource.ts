@@ -1,6 +1,6 @@
 import * as pulumi from '@pulumi/pulumi'
-import { createClient, q, DocumentResponse } from './fauna'
-import { tryCreate } from './utils/tryCreate'
+import { DocumentResponse, q } from './fauna'
+import { tryQuery } from './utils/tryQuery'
 
 interface DocumentProviderArgs {
   collection: string
@@ -10,27 +10,17 @@ class DocumentResourceProvider implements pulumi.dynamic.ResourceProvider {
   async create(
     inputs: DocumentProviderArgs
   ): Promise<pulumi.dynamic.CreateResult> {
-    const client = await createClient()
     const uuid = await import('uuid')
 
-    const tryCreateDocument = async (): Promise<DocumentResponse> => {
-      return await client.query(
-        q.Create(q.Collection(inputs.collection), {
-          data: inputs.data,
-        })
-      )
-    }
-
-    const result = await tryCreate(tryCreateDocument)
+    const response = await tryQuery<DocumentResponse>(
+      q.Create(q.Collection(inputs.collection), {
+        data: inputs.data,
+      })
+    )
 
     return {
       id: uuid.v4(),
-      outs: {
-        collection: inputs.collection,
-        id: result.ref.id,
-        data: inputs.data,
-        ts: result.ts,
-      },
+      outs: generateOuts(response, inputs),
     }
   }
 
@@ -50,8 +40,6 @@ class DocumentResourceProvider implements pulumi.dynamic.ResourceProvider {
 
     changes = changes || JSON.stringify(olds.data) !== JSON.stringify(news.data)
 
-    console.log(replaces)
-
     return {
       changes,
       replaces,
@@ -64,39 +52,31 @@ class DocumentResourceProvider implements pulumi.dynamic.ResourceProvider {
     olds: DocumentProviderArgs,
     news: DocumentProviderArgs
   ): Promise<pulumi.dynamic.UpdateResult> {
-    const client = await createClient()
-
-    let response: DocumentResponse
-    try {
-      response = await client.query(
-        q.Update(q.Ref(q.Collection(news.collection), id), {
-          data: news.data,
-        })
-      )
-    } catch (error) {
-      throw new Error(
-        JSON.stringify(error.requestResult.responseContent.errors[0])
-      )
-    }
+    const response = await tryQuery<DocumentResponse>(
+      q.Update(q.Ref(q.Collection(news.collection), id), {
+        data: news.data,
+      })
+    )
 
     return {
-      outs: {
-        collection: news.collection,
-        data: news.data,
-        ts: response.ts,
-      },
+      outs: generateOuts(response, news),
     }
   }
 
   async delete(id: pulumi.ID, props: DocumentProviderArgs) {
-    const client = await createClient()
+    await tryQuery(q.Delete(q.Ref(q.Collection(props.collection), id)))
+  }
+}
 
-    try {
-      await client.query(q.Delete(q.Ref(q.Collection(props.collection), id)))
-    } catch (error) {
-      console.error(error.requestResult.responseContent.errors)
-      throw new Error(error.requestResult.responseContent.errors[0].description)
-    }
+function generateOuts(
+  response: DocumentResponse,
+  inputs: DocumentProviderArgs
+) {
+  return {
+    collection: inputs.collection,
+    id: response.ref.id,
+    data: inputs.data,
+    ts: response.ts,
   }
 }
 

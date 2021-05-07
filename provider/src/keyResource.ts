@@ -1,9 +1,9 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
-import { createClient, q, KeyResponse } from './fauna'
+import { KeyResponse, q } from './fauna'
 import { BuiltInRole } from './utils/builtInRoles'
 import { SerializedExpr } from './utils/serializedExpr'
-import { tryCreate } from './utils/tryCreate'
+import { tryQuery } from './utils/tryQuery'
 
 interface KeyProviderArgs {
   role: BuiltInRole | SerializedExpr | SerializedExpr[]
@@ -12,10 +12,9 @@ interface KeyProviderArgs {
     [index: string]: unknown
   }
 }
+
 class KeyResourceProvider implements pulumi.dynamic.ResourceProvider {
   async create(inputs: KeyProviderArgs): Promise<pulumi.dynamic.CreateResult> {
-    const client = await createClient()
-
     let role: string | Expr | Expr[]
     if (Array.isArray(inputs.role)) {
       role = inputs.role.map(element => new Expr(element.raw))
@@ -25,37 +24,30 @@ class KeyResourceProvider implements pulumi.dynamic.ResourceProvider {
       role = new Expr(inputs.role.raw)
     }
 
-    const tryCreateKey = async (): Promise<KeyResponse> => {
-      return await client.query(
-        q.CreateKey({
-          role,
-          data: inputs.data,
-        })
-      )
-    }
-
-    const result = await tryCreate(tryCreateKey)
+    const response = await tryQuery<KeyResponse>(
+      q.CreateKey({
+        role,
+        data: inputs.data,
+      })
+    )
 
     return {
-      id: result.ref.id,
-      outs: {
-        ts: result.ts,
-        role: inputs.role,
-        data: inputs.data,
-        secret: result.secret,
-      },
+      id: response.ref.id,
+      outs: generateOuts(response, inputs),
     }
   }
 
   async delete(id: pulumi.ID) {
-    const client = await createClient()
+    await tryQuery(q.Delete(q.Ref(q.Keys(), id)))
+  }
+}
 
-    try {
-      await client.query(q.Delete(q.Ref(q.Keys(), id)))
-    } catch (error) {
-      console.error(error.requestResult.responseContent.errors)
-      throw new Error(error.requestResult.responseContent.errors[0].description)
-    }
+function generateOuts(response: KeyResponse, inputs: KeyProviderArgs) {
+  return {
+    ts: response.ts,
+    role: inputs.role,
+    data: inputs.data,
+    secret: response.secret,
   }
 }
 

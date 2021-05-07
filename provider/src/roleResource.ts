@@ -1,12 +1,12 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
 
-import { createClient, q, RoleResponse } from './fauna'
+import { q, RoleResponse } from './fauna'
 import {
   recursivelyConstructExpr,
   SerializedExpr,
 } from './utils/serializedExpr'
-import { tryCreate } from './utils/tryCreate'
+import { tryQuery } from './utils/tryQuery'
 
 interface Actions {
   create?: boolean | Expr
@@ -62,20 +62,13 @@ interface RoleProviderArgs {
 class RoleResourceProvider implements pulumi.dynamic.ResourceProvider {
   async create(inputs: RoleProviderArgs): Promise<pulumi.dynamic.CreateResult> {
     const uuid = await import('uuid')
-    const client = await createClient()
 
-    const tryCreateRole = async (): Promise<RoleResponse> => {
-      const params = constructRoleConfig(inputs)
-
-      return await client.query(q.CreateRole(params))
-    }
-
-    const result = await tryCreate<RoleResponse>(tryCreateRole)
-    const outs = generateOutput(inputs, result)
+    const params = constructRoleConfig(inputs)
+    const response = await tryQuery<RoleResponse>(q.CreateRole(params))
 
     return {
       id: uuid.v4(),
-      outs,
+      outs: generateOutput(response, inputs),
     }
   }
 
@@ -102,36 +95,19 @@ class RoleResourceProvider implements pulumi.dynamic.ResourceProvider {
     olds: RoleProviderArgs,
     news: RoleProviderArgs
   ): Promise<pulumi.dynamic.UpdateResult> {
-    const client = await createClient()
-
     const params = constructRoleConfig(news)
 
-    let response: RoleResponse
-    try {
-      response = await client.query(q.Update(q.Role(olds.name), params))
-    } catch (error) {
-      console.error(error.requestResult.responseContent.errors[0])
-      throw new Error(
-        JSON.stringify(
-          error.requestResult.responseContent.errors[0].description
-        )
-      )
-    }
+    const response = await tryQuery<RoleResponse>(
+      q.Update(q.Role(olds.name), params)
+    )
 
     return {
-      outs: generateOutput(news, response),
+      outs: generateOutput(response, news),
     }
   }
 
   async delete(id: pulumi.ID, props: RoleProviderArgs) {
-    const client = await createClient()
-
-    try {
-      await client.query(q.Delete(q.Role(props.name)))
-    } catch (error) {
-      console.error(error.requestResult.responseContent.errors)
-      throw new Error(error.requestResult.responseContent.errors[0].description)
-    }
+    await tryQuery(q.Delete(q.Role(props.name)))
   }
 }
 
@@ -273,7 +249,7 @@ function compareMembership(
   return false
 }
 
-function generateOutput(input: RoleProviderArgs, response: RoleResponse) {
+function generateOutput(response: RoleResponse, input: RoleProviderArgs) {
   return {
     name: response.name,
     ts: response.ts,

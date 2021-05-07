@@ -1,11 +1,11 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
-import { createClient, q, TokenResponse } from './fauna'
+import { q, TokenResponse } from './fauna'
 import {
   recursivelyConstructExpr,
   SerializedExpr,
 } from './utils/serializedExpr'
-import { tryCreate } from './utils/tryCreate'
+import { tryQuery } from './utils/tryQuery'
 
 interface TokenProviderArgs {
   instance: SerializedExpr
@@ -14,24 +14,18 @@ class TokenResourceProvider implements pulumi.dynamic.ResourceProvider {
   async create(
     inputs: TokenProviderArgs
   ): Promise<pulumi.dynamic.CreateResult> {
-    const client = await createClient()
-
-    const tryCreateToken = async (): Promise<TokenResponse> => {
-      return await client.query(
-        q.Create(q.Tokens(), {
-          instance: recursivelyConstructExpr(inputs.instance),
-        })
-      )
-    }
-
-    const result = await tryCreate(tryCreateToken)
+    const response = await tryQuery<TokenResponse>(
+      q.Create(q.Tokens(), {
+        instance: recursivelyConstructExpr(inputs.instance),
+      })
+    )
 
     return {
-      id: result.ref.id,
+      id: response.ref.id,
       outs: {
         instance: inputs.instance,
-        ts: result.ts,
-        secret: result.secret,
+        ts: response.ts,
+        secret: response.secret,
       },
     }
   }
@@ -52,14 +46,7 @@ class TokenResourceProvider implements pulumi.dynamic.ResourceProvider {
   }
 
   async delete(id: pulumi.ID) {
-    const client = await createClient()
-
-    try {
-      await client.query(q.Delete(q.Ref(q.Tokens(), id)))
-    } catch (error) {
-      console.error(error.requestResult.responseContent.errors)
-      throw new Error(error.requestResult.responseContent.errors[0].description)
-    }
+    await tryQuery(q.Delete(q.Ref(q.Tokens(), id)))
   }
 }
 

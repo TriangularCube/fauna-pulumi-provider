@@ -1,11 +1,19 @@
+import { Client, Expr } from 'faunadb'
 import util from 'util'
+import { createClient } from '../fauna'
 
-export async function tryCreate<T>(func: () => Promise<T>): Promise<T> {
+let client: Client
+
+export async function tryQuery<T>(query: Expr): Promise<T> {
   let response: T
   let retry = false
 
+  if (client == null) {
+    client = await createClient()
+  }
+
   try {
-    response = await func()
+    response = await client.query(query)
   } catch (error) {
     const errorData = error.requestResult.responseContent.errors[0]
 
@@ -15,7 +23,7 @@ export async function tryCreate<T>(func: () => Promise<T>): Promise<T> {
       retry = true
     } else {
       console.error(
-        util.inspect(error.requestResult.responseContent.errors[0], {
+        util.inspect(errorData, {
           depth: null,
         })
       )
@@ -25,11 +33,16 @@ export async function tryCreate<T>(func: () => Promise<T>): Promise<T> {
 
   if (retry) {
     try {
+      // Wait 60 seconds for duplicate entries to finish resolving in Fauna
       await new Promise(resolve => setTimeout(resolve, 60000))
 
-      response = await func()
+      response = await client.query(query)
     } catch (error) {
-      console.error(error.requestResult.responseContent.errors[0])
+      console.error(
+        util.inspect(error.requestResult.responseContent.errors[0], {
+          depth: null,
+        })
+      )
       throw new Error(error.requestResult.responseContent.errors[0].description)
     }
   }

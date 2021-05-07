@@ -1,6 +1,6 @@
 import * as pulumi from '@pulumi/pulumi'
-import { CollectionResponse, createClient, q } from './fauna'
-import { tryCreate } from './utils/tryCreate'
+import { CollectionResponse, q } from './fauna'
+import { tryQuery } from './utils/tryQuery'
 
 interface CollectionProviderArgs {
   name: string
@@ -26,20 +26,15 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
     inputs: CollectionProviderArgs
   ): Promise<pulumi.dynamic.CreateResult> {
     const uuid = await import('uuid')
-    const client = await createClient()
 
-    const tryCreateCollection = async (): Promise<CollectionResponse> => {
-      return await client.query(
-        q.CreateCollection({
-          name: inputs.name,
-          history_days: inputs.history_days,
-          ttl_days: inputs.ttl_days,
-          data: inputs.data,
-        })
-      )
-    }
-
-    const response = await tryCreate<CollectionResponse>(tryCreateCollection)
+    const response = await tryQuery<CollectionResponse>(
+      q.CreateCollection({
+        name: inputs.name,
+        history_days: inputs.history_days,
+        ttl_days: inputs.ttl_days,
+        data: inputs.data,
+      })
+    )
 
     return {
       id: uuid.v4(),
@@ -75,6 +70,10 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
         // History Days is a special case, because the default is
         //  30 days. This value will be 30 even if input is undefined
 
+        // TODO: In theory the output should always be 30 as it's always
+        //   returned from the query. Pulumi is having a difficult time
+        //   serializing and returning the proper output at the moment though.
+
         stables.push(key)
       } else {
         update = true
@@ -92,25 +91,14 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
     olds: CollectionProviderArgs,
     news: CollectionProviderArgs
   ): Promise<pulumi.dynamic.UpdateResult> {
-    const client = await createClient()
-
-    let response: CollectionResponse
-    try {
-      response = await client.query(
-        q.Update(q.Collection(olds.name), {
-          name: news.name,
-          history_days: news.history_days,
-          ttl_days: news.ttl_days,
-          data: news.data,
-        })
-      )
-    } catch (error) {
-      throw new Error(
-        JSON.stringify(
-          error.requestResult.responseContent.errors[0].description
-        )
-      )
-    }
+    const response = await tryQuery<CollectionResponse>(
+      q.Update(q.Collection(olds.name), {
+        name: news.name,
+        history_days: news.history_days,
+        ttl_days: news.ttl_days,
+        data: news.data,
+      })
+    )
 
     return {
       outs: generateOutput(response),
@@ -118,13 +106,7 @@ class CollectionResourceProvider implements pulumi.dynamic.ResourceProvider {
   }
 
   async delete(id: pulumi.ID, props: CollectionProviderArgs) {
-    const client = await createClient()
-
-    try {
-      await client.query(q.Delete(q.Collection(props.name)))
-    } catch (error) {
-      throw new Error(error.requestResult.responseContent.errors[0].description)
-    }
+    await tryQuery(q.Delete(q.Collection(props.name)))
   }
 }
 
