@@ -1,25 +1,28 @@
 import * as pulumi from '@pulumi/pulumi'
 import { DocumentResponse, q } from './fauna'
+import { constructObjWithExpr } from './utils/serializedExpr'
 import { tryQuery } from './utils/tryQuery'
+
+interface DocumentParams {
+  data?: Record<string, unknown>
+  credentials?: Record<string, unknown>
+  ttl?: string | number
+}
 
 interface DocumentProviderArgs {
   collection: string
-  data: Record<string, unknown>
+  params?: DocumentParams
 }
 class DocumentResourceProvider implements pulumi.dynamic.ResourceProvider {
   async create(
     inputs: DocumentProviderArgs
   ): Promise<pulumi.dynamic.CreateResult> {
-    const uuid = await import('uuid')
-
     const response = await tryQuery<DocumentResponse>(
-      q.Create(q.Collection(inputs.collection), {
-        data: inputs.data,
-      })
+      q.Create(q.Collection(inputs.collection), constructParams(inputs.params))
     )
 
     return {
-      id: uuid.v4(),
+      id: response.ref.id,
       outs: generateOuts(response, inputs),
     }
   }
@@ -38,7 +41,8 @@ class DocumentResourceProvider implements pulumi.dynamic.ResourceProvider {
       replaces.push('collection')
     }
 
-    changes = changes || JSON.stringify(olds.data) !== JSON.stringify(news.data)
+    changes =
+      changes || JSON.stringify(olds.params) !== JSON.stringify(news.params)
 
     return {
       changes,
@@ -53,9 +57,10 @@ class DocumentResourceProvider implements pulumi.dynamic.ResourceProvider {
     news: DocumentProviderArgs
   ): Promise<pulumi.dynamic.UpdateResult> {
     const response = await tryQuery<DocumentResponse>(
-      q.Update(q.Ref(q.Collection(news.collection), id), {
-        data: news.data,
-      })
+      q.Update(
+        q.Ref(q.Collection(news.collection), id),
+        constructParams(news.params)
+      )
     )
 
     return {
@@ -68,6 +73,24 @@ class DocumentResourceProvider implements pulumi.dynamic.ResourceProvider {
   }
 }
 
+function constructParams(params?: DocumentParams): DocumentParams {
+  const out: DocumentParams = {}
+
+  if (params?.data != null) {
+    out.data = constructObjWithExpr(params.data)
+  }
+
+  if (params?.credentials != null) {
+    out.credentials = constructObjWithExpr(params.credentials)
+  }
+
+  if (params?.ttl != null) {
+    out.ttl = params.ttl
+  }
+
+  return out
+}
+
 function generateOuts(
   response: DocumentResponse,
   inputs: DocumentProviderArgs
@@ -75,14 +98,18 @@ function generateOuts(
   return {
     collection: inputs.collection,
     id: response.ref.id,
-    data: inputs.data,
+    params: inputs.params,
     ts: response.ts,
   }
 }
 
 interface DocumentArgs {
   collection: pulumi.Input<string>
-  data: pulumi.Input<Record<string, unknown>>
+  params?: {
+    data?: pulumi.Input<Record<string, unknown>>
+    credentials?: pulumi.Input<Record<string, unknown>>
+    ttl?: pulumi.Input<string | number>
+  }
 }
 export class Document extends pulumi.dynamic.Resource {
   public readonly ts!: pulumi.Output<number>

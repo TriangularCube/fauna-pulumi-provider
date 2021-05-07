@@ -4,6 +4,12 @@ export interface SerializedExpr {
   raw: Record<string, unknown>
 }
 
+export function constructObjWithExpr(
+  serialized: Record<string, unknown>
+): Record<string, unknown> {
+  return recur(serialized) as Record<string, unknown>
+}
+
 export function recursivelyConstructExpr(serialized: SerializedExpr): Expr {
   return new Expr(recur(serialized.raw) as Expr)
 }
