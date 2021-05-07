@@ -148,7 +148,7 @@ function constructRoleConfig(input: RoleProviderArgs): RoleConfiguration {
     }
 
     return {
-      resource: new Expr(element.resource.raw),
+      resource: recursivelyConstructExpr(element.resource),
       actions,
     }
   })
