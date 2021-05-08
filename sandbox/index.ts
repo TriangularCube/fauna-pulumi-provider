@@ -12,6 +12,35 @@ import {
 const users = new Collection('users')
 const maps = new Collection('maps')
 
+const testIndex = new Index('test-index', {
+  source: [
+    {
+      collection: maps.name,
+
+      fields: {
+        creatorName: q.Query(doc =>
+          q.Select(
+            ['data', 'displayName'],
+            q.Get(q.Select(['data', 'creator'], doc))
+          )
+        ),
+      }
+    },
+  ],
+  terms: [{ field: ['data', 'creator']}],
+  values: [
+    {
+      binding: 'creatorName',
+    },
+    {
+      field: ['data', 'name'],
+    },
+    {
+      field: ['data', 'created'],
+    },
+  ],
+})
+
 const testUser = new Document(
   'test-user',
   {

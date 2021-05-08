@@ -1,15 +1,11 @@
 import * as pulumi from '@pulumi/pulumi'
 import { Expr } from 'faunadb'
 import { IndexResponse, q } from './fauna'
-import { SerializedExpr } from './utils/serializedExpr'
+import {
+  recursivelyConstructExpr,
+  SerializedExpr,
+} from './utils/serializedExpr'
 import { tryQuery } from './utils/tryQuery'
-
-interface SourceObject {
-  collection: string | Expr
-  fields?: {
-    [index: string]: Expr
-  }
-}
 
 interface SerializedSourceObject {
   collection: string | SerializedExpr
@@ -83,7 +79,7 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
           const fields: { [index: string]: Expr } = {}
 
           for (const [key, value] of Object.entries(element.fields)) {
-            fields[key] = new Expr(value.raw)
+            fields[key] = recursivelyConstructExpr(value)
           }
 
           sourceObject.fields = fields
@@ -192,6 +188,13 @@ class IndexResourceProvider implements pulumi.dynamic.ResourceProvider {
 
   async delete(id: pulumi.ID, props: IndexProviderArgs) {
     await tryQuery(q.Delete(q.Index(props.name)))
+  }
+}
+
+interface SourceObject {
+  collection: pulumi.Input<string | Expr>
+  fields?: {
+    [index: string]: pulumi.Input<Expr>
   }
 }
 
