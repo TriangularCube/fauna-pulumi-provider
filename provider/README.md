@@ -13,7 +13,7 @@ to create any resources. Please refer to this
 You can install this library using npm:
 
 ```
-npm install @triangularcube/fauna-pulumi-provider
+npm install fauna-pulumi-provider
 ```
 
 After installation, you will need to configure access to
