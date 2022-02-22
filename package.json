@@ -1,10 +1,13 @@
 {
-  "name": "fauna-pulumi-provider",
   "private": true,
+  "scripts": {
+    "update": "yarn upgrade-interactive"
+  },
   "workspaces": {
     "packages": [
       "provider",
       "sandbox"
     ]
-  }
+  },
+  "packageManager": "yarn@3.2.0"
 }
