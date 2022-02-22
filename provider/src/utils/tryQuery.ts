@@ -4,6 +4,19 @@ import { createClient } from '../fauna'
 
 let client: Client
 
+interface FaunaError {
+  requestResult: {
+    responseContent: {
+      errors: {
+        description: string
+        failures?: {
+          code: string
+        }[]
+      }[]
+    }
+  }
+}
+
 export async function tryQuery<T>(query: Expr): Promise<T> {
   let response: T
   let retry = false
@@ -15,7 +28,8 @@ export async function tryQuery<T>(query: Expr): Promise<T> {
   try {
     response = await client.query(query)
   } catch (error) {
-    const errorData = error.requestResult.responseContent.errors[0]
+    const faunaError = error as FaunaError
+    const errorData = faunaError.requestResult.responseContent.errors[0]
 
     // TODO: Match other errors which warrant retry
     // TODO: Support multiple errors?
@@ -38,12 +52,15 @@ export async function tryQuery<T>(query: Expr): Promise<T> {
 
       response = await client.query(query)
     } catch (error) {
+      const faunaError = error as FaunaError
       console.error(
-        util.inspect(error.requestResult.responseContent.errors[0], {
+        util.inspect(faunaError.requestResult.responseContent.errors[0], {
           depth: null,
         })
       )
-      throw new Error(error.requestResult.responseContent.errors[0].description)
+      throw new Error(
+        faunaError.requestResult.responseContent.errors[0].description
+      )
     }
   }
 
